@@ -1,8 +1,8 @@
-/core/.env
-/core/storage/*
-!/core/storage/.gitkeep
-/core/node_modules/
-/public_html/assets/fonts/*.woff2
-/public_html/assets/fonts/*.woff
-.DS_Store
+node_modules/
+dist/
+out/
 *.log
+.DS_Store
+Thumbs.db
+.env
+src/renderer/app.css

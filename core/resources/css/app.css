@@ -1,6 +1,0 @@
-@import "tailwindcss";
-@source "../../../public_html/**/*.php";
-@source "../../../public_html/assets/js/*.js";
-
-/* Runtime ships with a prebuilt local CSS file in public_html/assets/css/app.css.
-   This source is kept for teams that want to regenerate the UI with Tailwind v4. */

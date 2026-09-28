@@ -1,176 +1,86 @@
-# RDSCO Attendance Report Maker
+# RDSCO Attendance
 
-سامانه سبک PHP برای دریافت خروجی دستگاه ساعت‌زنی، فیلتر تاریخ شمسی و تولید Excel/PDF.
+نرم‌افزار دسکتاپ گزارش ساعت‌زنی با Electron. برنامه کاملاً محلی اجرا می‌شود و برای کار روزانه به سرور، PHP، دیتابیس یا مرورگر نیاز ندارد.
 
-## ساختار مناسب هاست
+## روند استفاده
 
-پروژه عمداً به دو بخش جدا شده است:
+1. برنامه را یک‌بار نصب کنید.
+2. فایل DAT/TXT/CSV دستگاه ساعت‌زنی را انتخاب کنید.
+3. بازه گزارش را با تاریخ شمسی تعیین کنید.
+4. Excel یا PDF را ذخیره کنید.
+5. برنامه هنگام اجرا GitHub Releases را برای نسخه جدید بررسی می‌کند.
 
-```text
-ROOT/
-├── core/
-│   ├── app/
-│   ├── resources/
-│   ├── scripts/
-│   ├── storage/
-│   ├── .env
-│   ├── package.json
-│   └── package-lock.json
-│
-└── public_html/
-    ├── index.php
-    ├── api.php
-    ├── .htaccess
-    └── assets/
-```
+## قابلیت‌ها
 
-در هاست، پوشه `core` را کنار `public_html` قرار دهید. فقط محتویات `public_html` از وب قابل دسترسی است و فایل‌های حساس مثل `.env`، کاربران، لاگ‌ها و Jobهای پردازش در `core` باقی می‌مانند.
-
-## نصب روی هاست
-
-1. پوشه `core` را در Root اکانت، کنار `public_html` آپلود کنید.
-2. محتویات پوشه `public_html` پروژه را داخل `public_html` هاست قرار دهید.
-3. فایل تنظیمات را بسازید:
-
-```bash
-cp core/.env.example core/.env
-```
-
-4. دسترسی نوشتن PHP به `core/storage` را فراهم کنید.
-5. در مرورگر سایت را باز کنید؛ فرم ایجاد اولین اپراتور نمایش داده می‌شود.
-
-فایل‌های `public_html/index.php` و `public_html/api.php` به صورت مستقیم `../core/app/bootstrap.php` را لود می‌کنند؛ نیازی به تغییر Document Root یا Symlink نیست.
-
-## اجرای Build
-
-تمام کارهای ترمینال در یک اسکریپت قرار گرفته‌اند:
-
-```bash
-./core/scripts/build-assets.sh
-```
-
-این اسکریپت:
-- `npm ci` یا `npm install`
-- `npm run build:css`
-- PHP lint روی `core/app` و `public_html`
-
-را اجرا می‌کند.
-
-GitHub Action با نام **Build & Validate** نیز همین کار را خودکار روی `main` انجام می‌دهد و CSS ساخته‌شده را در این مسیر قرار می‌دهد:
-
-```text
-public_html/assets/css/tailwind.css
-```
-
-## تست محلی
-
-از Root پروژه:
-
-```bash
-cp core/.env.example core/.env
-./core/scripts/build-assets.sh
-php -S 127.0.0.1:8080 -t public_html
-```
-
-## تنظیمات env
-
-فایل تنظیمات در `core/.env` قرار می‌گیرد:
-
-```dotenv
-APP_ENV=production
-APP_TIMEZONE=Asia/Tehran
-APP_KEY=change-this-to-a-long-random-secret
-
-KAVENEGAR_API_KEY=
-KAVENEGAR_OTP_TEMPLATE=
-KAVENEGAR_SENDER=
-
-PDF_BROWSER_PATH=/usr/bin/chromium
-PDF_NO_SANDBOX=false
-PDF_TIMEOUT_SECONDS=60
-```
-
-## فونت Vazirmatn
-
-فایل فونت را در این مسیر قرار دهید:
-
-```text
-public_html/assets/fonts/Vazirmatn-Regular.woff2
-```
-
-PDF نیز همین فایل محلی را استفاده می‌کند.
-
-## قابلیت‌های اصلی
-
-- PHP خالص و بدون فریم‌ورک یا دیتابیس خارجی
-- ورود با موبایل و رمز عبور
-- OTP کاوه‌نگار
-- Audit Log
-- CSRF و Rate Limit
-- DAT/TXT/CSV
+- بدون Login
+- پردازش کاملاً Local
 - فیلتر تاریخ شمسی
-- تاریخ شمسی و میلادی در خروجی
-- Excel سه‌شیتی
-- PDF افقی A4 با جداسازی کامل صفحات پرسنل
-- بدون CDN در Runtime
+- نمایش تاریخ شمسی و میلادی
+- Excel سه‌شیتی: خلاصه، تردد روزانه، لاگ خام
+- PDF افقی A4
+- شروع گزارش هر پرسنل از صفحه جدید
+- تکرار هدر همان پرسنل در صفحات ادامه
+- تک‌ثبت و ترددهای میانی
+- Audit Log محلی سبک در پوشه داده برنامه
+- Auto Update از GitHub Releases
+- رابط RTL با Tailwind و بدون CDN
+
+## منطق ورود و خروج
+
+ساختار فعلی فایل دستگاه نوع ورود/خروج قابل اتکایی ندارد. بنابراین:
+
+- اولین ثبت روز = ورود
+- آخرین ثبت روز = خروج
+- ثبت‌های بین این دو = تردد میانی
+- یک ثبت در روز = تک‌ثبت؛ خروج نامشخص
+
+فاصله اولین تا آخرین ثبت «کارکرد قطعی» محسوب نمی‌شود.
+
+## توسعه
+
+نیازمندی: Node.js 22+
+
+```bash
+npm install
+npm run dev
+```
+
+بررسی کد و تست:
+
+```bash
+npm run check
+npm test
+```
+
+ساخت Installer:
+
+```bash
+npm run dist:win
+npm run dist:mac
+npm run dist:linux
+```
+
+## انتشار نسخه جدید و بروزرسانی خودکار
+
+برنامه از GitHub Releases به عنوان کانال بروزرسانی استفاده می‌کند.
+
+ساده‌ترین روش:
+
+1. در GitHub وارد بخش **Releases** شوید.
+2. یک Release جدید با Tag نسخه مثل `v1.0.1` بسازید.
+3. Release را Publish کنید.
+4. Workflow با نام **Build Desktop Release** نسخه Windows، macOS و Linux را می‌سازد و فایل‌ها را به همان Release اضافه می‌کند.
+5. نسخه‌های نصب‌شده هنگام اجرا Release جدید را تشخیص می‌دهند و دانلود می‌کنند.
+
+نسخه Package به صورت خودکار از Tag Release گرفته می‌شود؛ لازم نیست قبل از هر انتشار دستی `package.json` را تغییر دهید.
+
+> نکته macOS: برای بروزرسانی خودکار بدون هشدارهای امنیتی سیستم، در نسخه Production بهتر است Code Signing و Notarization اپل به Workflow اضافه شود.
+
+## GitHub Actions
+
+- **Desktop CI**: روی هر Push به main، CSS، Syntax و Smoke Test را بررسی می‌کند.
+- **Build Desktop Release**: هنگام Publish شدن Release، Installerها را می‌سازد و منتشر می‌کند.
 
 ## امنیت
 
-- `core` باید کنار `public_html` و خارج از Document Root باشد.
-- `core/.env` در Git ثبت نمی‌شود.
-- `core/storage` حاوی اطلاعات عملیاتی است و باید قابل نوشتن برای PHP ولی غیرعمومی باشد.
-- رمز عبور با `password_hash()` ذخیره می‌شود.
-- OTP به صورت Hash و با TTL کوتاه ذخیره می‌شود.
-- فایل خام ساعت‌زنی نگهداری نمی‌شود؛ Jobهای نرمال‌شده طبق `JOB_TTL_HOURS` منقضی می‌شوند.
-- در Production از HTTPS استفاده کنید.
-
-## نیازمندی PDF
-
-برای PDF باید Chromium یا Google Chrome روی سرور نصب باشد و PHP اجازه اجرای `proc_open` داشته باشد. مسیر مرورگر از `core/.env` با `PDF_BROWSER_PATH` تنظیم می‌شود.
-
-
-## استقرار خودکار روی DirectAdmin
-
-Workflow با نام **Deploy Production** در مسیر زیر قرار دارد:
-
-```text
-.github/workflows/deploy-production.yml
-```
-
-این Workflow در دو حالت اجرا می‌شود:
-
-- به‌صورت خودکار هنگام Publish کردن یک GitHub Release جدید
-- به‌صورت دستی از تب Actions > Deploy Production > Run workflow
-
-قبل از اولین Deploy، در GitHub به مسیر **Settings > Secrets and variables > Actions** بروید و Repository Secretهای زیر را بسازید:
-
-```text
-DEPLOY_HOST
-DEPLOY_USER
-DEPLOY_PORT
-DEPLOY_ROOT
-DEPLOY_SSH_KEY
-```
-
-برای سرور فعلی نمونه مقادیر به این شکل است:
-
-```text
-DEPLOY_HOST=saat.tukasabz.com
-DEPLOY_USER=tukasabz
-DEPLOY_PORT=22
-DEPLOY_ROOT=/home/tukasabz/domains/saat.tukasabz.com
-DEPLOY_SSH_KEY=<private SSH key>
-```
-
-کلید خصوصی باید متعلق به یک SSH Key باشد که Public Key آن در حساب DirectAdmin/SSH کاربر `tukasabz` مجاز شده است.
-
-در هر Deploy:
-
-- پروژه Build و PHP lint می‌شود.
-- پوشه `core` با سرور Sync می‌شود.
-- `core/.env` هرگز overwrite یا حذف نمی‌شود.
-- `core/storage` و اطلاعات کاربران/لاگ‌ها/Jobها حفظ می‌شوند.
-- محتویات `public_html` با نسخه Release همگام می‌شود.
-- پوشه‌های سیستمی رایج مانند `.well-known` و `cgi-bin` حذف نمی‌شوند.
-
-برای اولین تست، می‌توان Workflow را به‌صورت دستی اجرا کرد و پس از اطمینان، Releaseهای بعدی به‌طور خودکار Deploy خواهند شد.
+Renderer به Node.js دسترسی مستقیم ندارد. Electron با `contextIsolation` و Sandbox اجرا می‌شود و فقط APIهای لازم از طریق Preload در اختیار رابط قرار می‌گیرند. فایل ساعت‌زنی به هیچ سروری آپلود نمی‌شود.

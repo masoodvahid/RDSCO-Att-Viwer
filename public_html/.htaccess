@@ -1,3 +1,0 @@
-# Intentionally kept minimal for DirectAdmin/Apache/LiteSpeed compatibility.
-# The application does not require rewrite rules.
-# Security headers are emitted by PHP in core/app/bootstrap.php.
