@@ -1,0 +1,70 @@
+name: Build & Validate
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "public/assets/css/tailwind.css"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-main
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build assets and validate PHP
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Run project build script
+        shell: bash
+        run: |
+          chmod +x scripts/build-assets.sh
+          ./scripts/build-assets.sh
+
+      - name: Verify generated CSS
+        shell: bash
+        run: |
+          test -s public/assets/css/tailwind.css
+          echo "tailwind.css size: $(wc -c < public/assets/css/tailwind.css) bytes"
+
+      - name: Commit generated files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add public/assets/css/tailwind.css package-lock.json
+
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: rebuild frontend assets [skip ci]"
+          git push origin HEAD:main
