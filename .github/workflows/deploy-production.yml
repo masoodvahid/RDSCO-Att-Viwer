@@ -1,0 +1,87 @@
+name: Deploy Production
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy to DirectAdmin
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_ROOT: ${{ secrets.DEPLOY_ROOT }}
+
+    steps:
+      - name: Checkout released version
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Build and validate
+        shell: bash
+        run: |
+          chmod +x core/scripts/build-assets.sh
+          ./core/scripts/build-assets.sh
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        shell: bash
+        run: |
+          PORT="${DEPLOY_PORT:-22}"
+          ssh -p "$PORT" "$DEPLOY_USER@$DEPLOY_HOST" "echo 'SSH connection OK'"
+
+      - name: Deploy application
+        shell: bash
+        run: |
+          chmod +x core/scripts/deploy-remote.sh
+          ./core/scripts/deploy-remote.sh
+
+      - name: Deployment summary
+        shell: bash
+        run: |
+          echo "### Production deployment completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: \`${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Host: \`$DEPLOY_HOST\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Root: \`$DEPLOY_ROOT\`" >> "$GITHUB_STEP_SUMMARY"
