@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require dirname(__DIR__).'/app/bootstrap.php';
+require dirname(__DIR__).'/core/app/bootstrap.php';
 use Rdsco\AttReport\AttendanceParser;use Rdsco\AttReport\Audit;use Rdsco\AttReport\Auth;use Rdsco\AttReport\Helpers;use Rdsco\AttReport\Jalali;use Rdsco\AttReport\JobStore;use Rdsco\AttReport\PdfRenderer;use Rdsco\AttReport\ReportService;use Rdsco\AttReport\XlsxWriter;
 $action=(string)($_GET['action']??$_POST['action']??'');
 try{

@@ -9,6 +9,10 @@ if (!defined('BASE_PATH')) {
     define('BASE_PATH', dirname(__DIR__));
 }
 
+if (!defined('PUBLIC_PATH')) {
+    define('PUBLIC_PATH', dirname(BASE_PATH) . '/public_html');
+}
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'Rdsco\\AttReport\\';
     if (!str_starts_with($class, $prefix)) {

@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths-ignore:
-      - "public/assets/css/tailwind.css"
+      - "public_html/assets/css/tailwind.css"
 
 permissions:
   contents: write
@@ -42,14 +42,14 @@ jobs:
       - name: Run project build script
         shell: bash
         run: |
-          chmod +x scripts/build-assets.sh
-          ./scripts/build-assets.sh
+          chmod +x core/scripts/build-assets.sh
+          ./core/scripts/build-assets.sh
 
       - name: Verify generated CSS
         shell: bash
         run: |
-          test -s public/assets/css/tailwind.css
-          echo "tailwind.css size: $(wc -c < public/assets/css/tailwind.css) bytes"
+          test -s public_html/assets/css/tailwind.css
+          echo "tailwind.css size: $(wc -c < public_html/assets/css/tailwind.css) bytes"
 
       - name: Commit generated files
         shell: bash
@@ -57,7 +57,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add public/assets/css/tailwind.css package-lock.json
+          git add public_html/assets/css/tailwind.css core/package-lock.json
 
           if git diff --cached --quiet; then
             echo "No generated changes to commit."

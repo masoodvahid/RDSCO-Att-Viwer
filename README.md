@@ -1,95 +1,129 @@
 # RDSCO Attendance Report Maker
 
-سامانه سبک PHP برای دریافت خروجی دستگاه ساعت‌زنی، فیلتر بر اساس تاریخ شمسی و تولید Excel/PDF.
+سامانه سبک PHP برای دریافت خروجی دستگاه ساعت‌زنی، فیلتر تاریخ شمسی و تولید Excel/PDF.
 
-## قابلیت‌های MVP
+## ساختار مناسب هاست
 
-- PHP خالص و بدون فریم‌ورک یا دیتابیس خارجی.
-- ورود با شماره موبایل و رمز عبور.
-- ورود با OTP کاوه‌نگار.
-- فقط یک سطح دسترسی.
-- ثبت Audit Log برای ورود، خروج، آپلود، فیلتر، خروجی و خطاها.
-- CSRF، Session امن و Rate Limit.
-- آپلود DAT/TXT/CSV با ساختار:
-  `EmployeeID<TAB>YYYY-MM-DD HH:MM:SS<TAB>Status<TAB>Verify<TAB>WorkCode<TAB>Reserved`
-- فیلتر با تاریخ شمسی.
-- درج تاریخ شمسی و میلادی در Excel و PDF.
-- Excel سه‌شیتی: خلاصه، تردد روزانه و لاگ خام.
-- PDF افقی A4؛ هر پرسنل از صفحه جدید شروع می‌شود و هیچ صفحه‌ای بین دو پرسنل مشترک نیست.
-- اولین ثبت هر روز = ورود، آخرین ثبت = خروج؛ تک‌ثبت = نامشخص.
-- بدون CDN در Runtime.
+پروژه عمداً به دو بخش جدا شده است:
 
-## نیازمندی‌ها
-
-- PHP 8.2+
-- دسترسی نوشتن به `storage/`
-- HTTPS در Production
-- برای PDF: Chromium یا Google Chrome محلی + فعال بودن `proc_open`
-- برای OTP: دسترسی HTTPS به API کاوه‌نگار؛ cURL یا `allow_url_fopen`
-
-Excel توسط Writer داخلی ساخته می‌شود و به PhpSpreadsheet یا ZipArchive نیاز ندارد.
-
-## نصب
-
-```bash
-git clone https://github.com/masoodvahid/rdsco_att_report_maker.git
-cd rdsco_att_report_maker
-cp .env.example .env
+```text
+ROOT/
+├── core/
+│   ├── app/
+│   ├── resources/
+│   ├── scripts/
+│   ├── storage/
+│   ├── .env
+│   ├── package.json
+│   └── package-lock.json
+│
+└── public_html/
+    ├── index.php
+    ├── api.php
+    ├── .htaccess
+    └── assets/
 ```
 
-Document Root دامنه را روی `public/` قرار دهید.
+در هاست، پوشه `core` را کنار `public_html` قرار دهید. فقط محتویات `public_html` از وب قابل دسترسی است و فایل‌های حساس مثل `.env`، کاربران، لاگ‌ها و Jobهای پردازش در `core` باقی می‌مانند.
 
-برای تست محلی:
+## نصب روی هاست
+
+1. پوشه `core` را در Root اکانت، کنار `public_html` آپلود کنید.
+2. محتویات پوشه `public_html` پروژه را داخل `public_html` هاست قرار دهید.
+3. فایل تنظیمات را بسازید:
 
 ```bash
-php -S 127.0.0.1:8080 -t public
+cp core/.env.example core/.env
 ```
 
-در اولین بازدید، فرم ساخت اولین اپراتور باز می‌شود. بعد از ساخت اولین حساب، ثبت‌نام بسته می‌شود.
+4. دسترسی نوشتن PHP به `core/storage` را فراهم کنید.
+5. در مرورگر سایت را باز کنید؛ فرم ایجاد اولین اپراتور نمایش داده می‌شود.
+
+فایل‌های `public_html/index.php` و `public_html/api.php` به صورت مستقیم `../core/app/bootstrap.php` را لود می‌کنند؛ نیازی به تغییر Document Root یا Symlink نیست.
+
+## اجرای Build
+
+تمام کارهای ترمینال در یک اسکریپت قرار گرفته‌اند:
+
+```bash
+./core/scripts/build-assets.sh
+```
+
+این اسکریپت:
+- `npm ci` یا `npm install`
+- `npm run build:css`
+- PHP lint روی `core/app` و `public_html`
+
+را اجرا می‌کند.
+
+GitHub Action با نام **Build & Validate** نیز همین کار را خودکار روی `main` انجام می‌دهد و CSS ساخته‌شده را در این مسیر قرار می‌دهد:
+
+```text
+public_html/assets/css/tailwind.css
+```
+
+## تست محلی
+
+از Root پروژه:
+
+```bash
+cp core/.env.example core/.env
+./core/scripts/build-assets.sh
+php -S 127.0.0.1:8080 -t public_html
+```
 
 ## تنظیمات env
+
+فایل تنظیمات در `core/.env` قرار می‌گیرد:
 
 ```dotenv
 APP_ENV=production
 APP_TIMEZONE=Asia/Tehran
-APP_KEY=change-this
-KAVENEGAR_API_KEY=...
-KAVENEGAR_OTP_TEMPLATE=YourVerifyTemplate
+APP_KEY=change-this-to-a-long-random-secret
+
+KAVENEGAR_API_KEY=
+KAVENEGAR_OTP_TEMPLATE=
+KAVENEGAR_SENDER=
+
 PDF_BROWSER_PATH=/usr/bin/chromium
 PDF_NO_SANDBOX=false
 PDF_TIMEOUT_SECONDS=60
 ```
 
-اگر Verify Lookup کاوه‌نگار استفاده نمی‌شود، `KAVENEGAR_OTP_TEMPLATE` خالی و `KAVENEGAR_SENDER` تنظیم شود.
+## فونت Vazirmatn
 
-## Vazirmatn
-
-برای استفاده کاملاً محلی از فونت، فایل زیر را خودتان در این مسیر قرار دهید:
+فایل فونت را در این مسیر قرار دهید:
 
 ```text
-public/assets/fonts/Vazirmatn-Regular.woff2
+public_html/assets/fonts/Vazirmatn-Regular.woff2
 ```
 
-در نبود فونت، رابط با Tahoma/Arial نمایش داده می‌شود.
+PDF نیز همین فایل محلی را استفاده می‌کند.
 
-## Tailwind
+## قابلیت‌های اصلی
 
-فایل source برای Tailwind v4 در `resources/css/app.css` و فرمان build در `package.json` قرار دارد. Runtime به هیچ CDN وابسته نیست.
-
-```bash
-npm install
-npm run build:css
-```
+- PHP خالص و بدون فریم‌ورک یا دیتابیس خارجی
+- ورود با موبایل و رمز عبور
+- OTP کاوه‌نگار
+- Audit Log
+- CSRF و Rate Limit
+- DAT/TXT/CSV
+- فیلتر تاریخ شمسی
+- تاریخ شمسی و میلادی در خروجی
+- Excel سه‌شیتی
+- PDF افقی A4 با جداسازی کامل صفحات پرسنل
+- بدون CDN در Runtime
 
 ## امنیت
 
-- `.env` و `storage/` خارج از Document Root بمانند.
-- رمز با `password_hash()` ذخیره می‌شود.
-- OTP فقط به‌صورت hash و با TTL کوتاه ذخیره می‌شود.
-- فایل خام آپلودی نگهداری نمی‌شود؛ Job نرمال‌شده طبق `JOB_TTL_HOURS` منقضی می‌شود.
-- لاگ‌ها در `storage/logs/` به‌صورت JSONL ذخیره می‌شوند.
-- در Production حتماً HTTPS و Permission محدود برای `.env` و `storage` اعمال شود.
+- `core` باید کنار `public_html` و خارج از Document Root باشد.
+- `core/.env` در Git ثبت نمی‌شود.
+- `core/storage` حاوی اطلاعات عملیاتی است و باید قابل نوشتن برای PHP ولی غیرعمومی باشد.
+- رمز عبور با `password_hash()` ذخیره می‌شود.
+- OTP به صورت Hash و با TTL کوتاه ذخیره می‌شود.
+- فایل خام ساعت‌زنی نگهداری نمی‌شود؛ Jobهای نرمال‌شده طبق `JOB_TTL_HOURS` منقضی می‌شوند.
+- در Production از HTTPS استفاده کنید.
 
-## نکته PDF
+## نیازمندی PDF
 
-PDF با Chromium/Chrome محلی سرور تولید می‌شود. اگر هاست اشتراکی `proc_open` را بسته باشد، PDF سمت سرور در آن محیط قابل تولید نیست و باید Chrome/Chromium و این تابع فعال باشند.
+برای PDF باید Chromium یا Google Chrome روی سرور نصب باشد و PHP اجازه اجرای `proc_open` داشته باشد. مسیر مرورگر از `core/.env` با `PDF_BROWSER_PATH` تنظیم می‌شود.

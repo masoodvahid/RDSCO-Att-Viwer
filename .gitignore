@@ -1,8 +1,8 @@
-.env
-/storage/*
-!/storage/.gitkeep
-/public/assets/fonts/*.woff2
-/public/assets/fonts/*.woff
-node_modules/
+/core/.env
+/core/storage/*
+!/core/storage/.gitkeep
+/core/node_modules/
+/public_html/assets/fonts/*.woff2
+/public_html/assets/fonts/*.woff
 .DS_Store
 *.log

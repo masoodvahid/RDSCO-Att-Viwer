@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require dirname(__DIR__).'/app/bootstrap.php';
+require dirname(__DIR__).'/core/app/bootstrap.php';
 use Rdsco\AttReport\Auth;use Rdsco\AttReport\Helpers;use Rdsco\AttReport\JobStore;
 $csrf=Helpers::csrfToken();$hasUsers=Auth::hasUsers();$user=Auth::user();$meta=null;
 if($user&&!empty($_SESSION['job_id'])){try{$meta=JobStore::meta((string)$_SESSION['job_id']);}catch(Throwable){unset($_SESSION['job_id']);}}
