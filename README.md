@@ -127,3 +127,50 @@ PDF نیز همین فایل محلی را استفاده می‌کند.
 ## نیازمندی PDF
 
 برای PDF باید Chromium یا Google Chrome روی سرور نصب باشد و PHP اجازه اجرای `proc_open` داشته باشد. مسیر مرورگر از `core/.env` با `PDF_BROWSER_PATH` تنظیم می‌شود.
+
+
+## استقرار خودکار روی DirectAdmin
+
+Workflow با نام **Deploy Production** در مسیر زیر قرار دارد:
+
+```text
+.github/workflows/deploy-production.yml
+```
+
+این Workflow در دو حالت اجرا می‌شود:
+
+- به‌صورت خودکار هنگام Publish کردن یک GitHub Release جدید
+- به‌صورت دستی از تب Actions > Deploy Production > Run workflow
+
+قبل از اولین Deploy، در GitHub به مسیر **Settings > Secrets and variables > Actions** بروید و Repository Secretهای زیر را بسازید:
+
+```text
+DEPLOY_HOST
+DEPLOY_USER
+DEPLOY_PORT
+DEPLOY_ROOT
+DEPLOY_SSH_KEY
+```
+
+برای سرور فعلی نمونه مقادیر به این شکل است:
+
+```text
+DEPLOY_HOST=saat.tukasabz.com
+DEPLOY_USER=tukasabz
+DEPLOY_PORT=22
+DEPLOY_ROOT=/home/tukasabz/domains/saat.tukasabz.com
+DEPLOY_SSH_KEY=<private SSH key>
+```
+
+کلید خصوصی باید متعلق به یک SSH Key باشد که Public Key آن در حساب DirectAdmin/SSH کاربر `tukasabz` مجاز شده است.
+
+در هر Deploy:
+
+- پروژه Build و PHP lint می‌شود.
+- پوشه `core` با سرور Sync می‌شود.
+- `core/.env` هرگز overwrite یا حذف نمی‌شود.
+- `core/storage` و اطلاعات کاربران/لاگ‌ها/Jobها حفظ می‌شوند.
+- محتویات `public_html` با نسخه Release همگام می‌شود.
+- پوشه‌های سیستمی رایج مانند `.well-known` و `cgi-bin` حذف نمی‌شوند.
+
+برای اولین تست، می‌توان Workflow را به‌صورت دستی اجرا کرد و پس از اطمینان، Releaseهای بعدی به‌طور خودکار Deploy خواهند شد.
