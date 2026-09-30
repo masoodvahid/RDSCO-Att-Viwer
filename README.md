@@ -26,6 +26,19 @@ xattr -cr "/Applications/Attendance Report.app" && open "/Applications/Attendanc
 تنظیمات برنامه (نام پرسنل، شیفت‌ها، اصلاح ساعت) در این مسیر ذخیره می‌شود و از زبانه «تنظیمات محاسبه» پشتیبان‌گیری دارد:
 Windows: `%APPDATA%\Attendance Report` — macOS: `~/Library/Application Support/Attendance Report`
 
+## به‌روزرسانی خودکار
+
+برنامه هنگام اجرا صفحه Releases همین مخزن را بررسی می‌کند. اگر نسخه جدیدی منتشر شده باشد، نواری بالای برنامه نشان داده می‌شود؛ با کلیک روی «به‌روزرسانی» نسخه جدید دانلود می‌شود و با «نصب و اجرای مجدد» نصب و برنامه دوباره باز می‌شود. بررسی دستی و خاموش کردن بررسی خودکار در زبانه «تنظیمات محاسبه» است.
+
+| نسخه نصب‌شده | روش به‌روزرسانی |
+|---|---|
+| Windows (نصب‌کننده) | electron-updater: دانلود و نصب بی‌صدا، سپس اجرای مجدد |
+| macOS | دانلود zip، بررسی هش SHA-512، جایگزینی برنامه در Applications و اجرای مجدد |
+| Windows (پرتابل) | دانلود فایل جدید کنار فایل فعلی و اجرای آن |
+| Linux (AppImage) | electron-updater: جایگزینی فایل AppImage |
+
+روی مک، به‌روزرسانی داخلی Apple (Squirrel) فقط برنامه‌های دارای گواهی Apple Developer را می‌پذیرد؛ برای همین برنامه خودش فایل را دانلود، هش آن را با `latest-mac.yml` مقایسه و جایگزین می‌کند. اگر برنامه اجازه نوشتن در پوشه‌اش را نداشته باشد، نسخه جدید در Finder نشان داده می‌شود.
+
 ## روش کار
 
 1. «بارگذاری فایل تردد» یا کشیدن فایل روی پنجره. چند فایل هم پشتیبانی می‌شود و ترددهای تکراری حذف می‌شوند.
@@ -71,7 +84,17 @@ git commit -am "chore: release 1.0.1"
 git tag v1.0.1 && git push origin main v1.0.1
 ```
 
-The workflow builds Windows (NSIS + portable), macOS (universal dmg + zip, ad-hoc signed) and Linux (AppImage), then publishes them to the GitHub release for that tag. It can also be started manually from the Actions tab with a version number.
+The workflow builds Windows (NSIS + portable), macOS (universal dmg + zip, ad-hoc signed) and Linux (AppImage), then publishes them to the GitHub release for that tag. It also uploads `latest.yml`, `latest-mac.yml` and `latest-linux.yml`, which the in-app updater reads — every release must be published through this workflow (or include those files) for installed apps to see it. It can also be started manually from the Actions tab with a version number.
+
+### Testing updates locally
+
+The updater is disabled when running from source unless a feed is given (ignored in packaged builds):
+
+```bash
+ATT_UPDATE_FEED=http://127.0.0.1:8080/ ATT_UPDATE_MODE=mac npm start   # mac | portable | native | manual
+```
+
+Serve `latest-mac.yml` / `latest.yml` / `latest-linux.yml` and the files they list from that URL.
 
 ### Dev helpers
 
@@ -89,7 +112,8 @@ Project layout:
 src/core/      parser.js (ZK attlog), engine.js (clock fix, pairing, blocks, shift matching),
                report.js (report model), time.js (Jalali helpers), defaults.js (first-run settings)
 src/export/    excel.js (exceljs, RTL), pdf-html.js + pdf.js (printToPDF, one employee per page)
-src/main/      main.js (window + IPC), preload.js (contextBridge API), settings.js (JSON store)
+src/main/      main.js (window + IPC), preload.js (contextBridge API), settings.js (JSON store),
+               updater.js + update-core.js (in-app updates from GitHub Releases)
 src/renderer/  index.html, styles.css, app.js (no framework)
 build/         afterPack.js (sets exe icon/version with resedit — no Wine needed for that step)
 scripts/       check.js (CI syntax check), dev/ (local helpers)

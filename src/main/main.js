@@ -8,11 +8,14 @@ const { processAll } = require('../core/engine');
 const { buildReport } = require('../core/report');
 const T = require('../core/time');
 const { SettingsStore, sanitize } = require('./settings');
+const { Updater, registerUpdaterIpc } = require('./updater');
 const { writeExcel, readEmployeeList } = require('../export/excel');
 const { writePdf } = require('../export/pdf');
 
 let win = null;
 let store = null;
+let updater = null;
+let autoChecked = false;
 const state = { files: [], result: null };
 
 // ------------------------------------------------------------------ data
@@ -98,7 +101,8 @@ function handle(channel, fn) {
 }
 
 function registerIpc() {
-  handle('app:init', () => ({ settings: store.data, summary: summary(), version: app.getVersion() }));
+  handle('app:init', () => ({ settings: store.data, summary: summary(), version: app.getVersion(), update: updater.state }));
+  registerUpdaterIpc(updater, handle);
 
   handle('files:open', async () => {
     const res = await dialog.showOpenDialog(win, {
@@ -235,6 +239,13 @@ function createWindow() {
     },
   });
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  // Check for a new version shortly after start-up (quietly; the UI only shows a banner if one exists)
+  win.webContents.once('did-finish-load', () => {
+    if (store.data.autoCheckUpdates !== false && !autoChecked) {
+      autoChecked = true;
+      setTimeout(() => updater.check({ manual: false }), 4000);
+    }
+  });
   // Never navigate away or open new windows from the UI
   win.webContents.on('will-navigate', (e) => e.preventDefault());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -263,6 +274,7 @@ app.whenReady().then(() => {
   if (last.length) {
     try { loadFiles(last); } catch (e) { console.error('reload last files', e); }
   }
+  updater = new Updater(() => win);
   registerIpc();
   createWindow();
 });

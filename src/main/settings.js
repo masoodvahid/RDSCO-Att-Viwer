@@ -11,6 +11,7 @@ function sanitize(s) {
   const out = clone(DEFAULTS);
   if (!s || typeof s !== 'object') return out;
   if (typeof s.orgName === 'string') out.orgName = s.orgName.slice(0, 200);
+  if (typeof s.autoCheckUpdates === 'boolean') out.autoCheckUpdates = s.autoCheckUpdates;
   if (s.employees && typeof s.employees === 'object') {
     out.employees = {};
     for (const [k, v] of Object.entries(s.employees)) {

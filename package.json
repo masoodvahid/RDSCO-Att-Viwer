@@ -16,8 +16,10 @@
   "author": "Sharif Digital Solutions",
   "license": "UNLICENSED",
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "exceljs": "^4.4.0",
-    "jalaali-js": "^2.0.1"
+    "jalaali-js": "^2.0.1",
+    "js-yaml": "^4.3.2"
   },
   "devDependencies": {
     "electron": "^44.4.5",
@@ -62,7 +64,14 @@
       "artifactName": "AttendanceReport-${version}-portable.${ext}"
     },
     "afterPack": "build/afterPack.js",
-    "publish": null,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "masoodvahid",
+        "repo": "rdsco_att_report_maker",
+        "releaseType": "release"
+      }
+    ],
     "mac": {
       "target": [
         "dmg",

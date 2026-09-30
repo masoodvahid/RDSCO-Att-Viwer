@@ -11,10 +11,13 @@
     <div class="brand">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>گزارش تردد پرسنل</span>
+      <span class="ver" id="appVersion"></span>
     </div>
     <div id="fileInfo" class="file-info"></div>
     <button id="btnOpen" class="btn primary">بارگذاری فایل تردد</button>
   </header>
+
+  <div id="updateBar" class="update-bar" role="status" aria-live="polite" hidden></div>
 
   <nav class="tabs" id="tabs">
     <button data-tab="report" class="active">گزارش</button>
@@ -152,6 +155,17 @@
           </div>
         </div>
         <div class="form-grid" id="rulesForm"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>به‌روزرسانی برنامه</h2>
+          <div class="head-actions"><button class="btn" id="btnCheckUpdate">بررسی نسخه جدید</button></div>
+        </div>
+        <div class="update-info">
+          <div>نسخه فعلی: <b id="curVersion"></b></div>
+          <div id="updateStatus" class="muted"></div>
+          <label class="inline-check"><input type="checkbox" id="autoUpdateChk"> هنگام اجرای برنامه، وجود نسخه جدید بررسی شود</label>
+        </div>
       </div>
       <div class="card">
         <div class="card-head"><h2>پشتیبان تنظیمات</h2></div>

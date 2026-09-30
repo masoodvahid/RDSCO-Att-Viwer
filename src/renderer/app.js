@@ -711,13 +711,119 @@ function bindAll() {
   });
 }
 
+
+// ================================================================= updates
+const U = { state: null, hiddenKey: null };
+const mb = (bytes) => (bytes ? `${(bytes / 1048576).toFixed(1)}` : '0');
+const updateKey = (st) => `${st.status}|${st.version || ''}|${st.phase || ''}`;
+
+function updateStatusText(st) {
+  const v = st.version;
+  switch (st.status) {
+    case 'disabled': return 'در اجرای مستقیم از سورس (حالت توسعه) به‌روزرسانی خودکار غیرفعال است.';
+    case 'idle': return 'هنوز بررسی نشده است.';
+    case 'checking': return 'در حال بررسی نسخه جدید…';
+    case 'none': return `برنامه به‌روز است${v ? ` (آخرین نسخه منتشرشده: ${v})` : ''}.`;
+    case 'available': return `نسخه جدید ${v} آماده دریافت است.`;
+    case 'downloading': return `در حال دریافت نسخه ${v}… ${st.percent != null ? `${st.percent}٪` : ''}`;
+    case 'downloaded': return `نسخه ${v} دریافت شد و با اجرای مجدد برنامه نصب می‌شود.`;
+    case 'error': return st.error || 'خطا در به‌روزرسانی';
+    default: return '';
+  }
+}
+
+function renderUpdate(st) {
+  if (!st) return;
+  U.state = st;
+  $('#appVersion').textContent = st.current ? `نسخه ${st.current}` : '';
+  $('#curVersion').textContent = st.current || '';
+  const modeNote = st.mode === 'portable' ? ' نسخه جدید کنار فایل فعلی ذخیره می‌شود.'
+    : st.mode === 'manual' ? ' دریافت از صفحه Releases انجام می‌شود.' : '';
+  $('#updateStatus').textContent = updateStatusText(st) + (st.status === 'available' ? modeNote : '');
+  $('#btnCheckUpdate').disabled = ['checking', 'downloading', 'disabled'].includes(st.status);
+
+  const bar = $('#updateBar');
+  const v = esc(st.version || '');
+  let html = '';
+  let err = false;
+  if (st.status === 'available') {
+    html = `<span class="ub-text"><b>نسخه جدید ${v}</b> آماده است (نسخه فعلی ${esc(st.current)}).</span>
+      <div class="ub-actions">
+        <button class="btn primary small" data-u="download">${st.mode === 'manual' ? 'دانلود از سایت' : 'به‌روزرسانی'}</button>
+        <button class="link" data-u="page">تغییرات این نسخه</button>
+        <button class="link" data-u="hide">بعداً</button>
+      </div>`;
+  } else if (st.status === 'downloading') {
+    const known = st.percent != null && st.total;
+    html = `<span class="ub-text">در حال دریافت نسخه ${v}… ${known ? `${st.percent}٪ (${mb(st.transferred)} از ${mb(st.total)} مگابایت)` : `${mb(st.transferred)} مگابایت`}</span>
+      <div class="ub-progress${known ? '' : ' indeterminate'}"><div style="width:${known ? st.percent : 30}%"></div></div>
+      <div class="ub-actions"><button class="link" data-u="cancel">لغو</button></div>`;
+  } else if (st.status === 'downloaded') {
+    const portable = st.mode === 'portable';
+    html = `<span class="ub-text"><b>نسخه ${v}</b> دریافت شد.${portable ? ` فایل: ${esc(st.downloadedPath || '')}` : ' برای نصب، برنامه بسته و دوباره باز می‌شود.'}</span>
+      <div class="ub-actions">
+        <button class="btn primary small" data-u="install">${portable ? 'اجرای نسخه جدید' : 'نصب و اجرای مجدد'}</button>
+        <button class="link" data-u="hide">بعداً</button>
+      </div>`;
+  } else if (st.status === 'error' && (st.phase !== 'check' || st.manual)) {
+    err = true;
+    html = `<span class="ub-text" title="${esc(st.detail || '')}">به‌روزرسانی انجام نشد: ${esc(st.error)}</span>
+      <div class="ub-actions">
+        <button class="link" data-u="${st.phase === 'check' ? 'check' : 'download'}">تلاش دوباره</button>
+        <button class="link" data-u="page">دانلود از سایت</button>
+        <button class="link" data-u="hide">بستن</button>
+      </div>`;
+  }
+  const hidden = !html || U.hiddenKey === updateKey(st);
+  bar.classList.toggle('err', err);
+  bar.hidden = hidden;
+  if (!hidden) bar.innerHTML = html;
+}
+
+function bindUpdates() {
+  api.onUpdateState((st) => {
+    const prev = U.state;
+    renderUpdate(st);
+    if (prev && prev.status === 'checking' && st.manual && st.status === 'none') {
+      toast(`برنامه به‌روز است (نسخه ${st.current}).`);
+    }
+  });
+  $('#updateBar').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-u]');
+    if (!b) return;
+    const act = b.dataset.u;
+    if (act === 'hide') { U.hiddenKey = updateKey(U.state); $('#updateBar').hidden = true; return; }
+    try {
+      if (act === 'download') renderUpdate(await call(api.updateDownload()));
+      else if (act === 'cancel') renderUpdate(await call(api.updateCancel()));
+      else if (act === 'install') renderUpdate(await call(api.updateInstall()));
+      else if (act === 'check') renderUpdate(await call(api.updateCheck()));
+      else if (act === 'page') await call(api.updatePage());
+    } catch (err) {
+      toast(err.message, { error: true });
+    }
+  });
+  $('#btnCheckUpdate').onclick = () => busy($('#btnCheckUpdate'), async () => {
+    U.hiddenKey = null;
+    renderUpdate(await call(api.updateCheck()));
+  });
+  $('#autoUpdateChk').onchange = (e) => busy(null, async () => {
+    const d = await call(api.saveSettings({ autoCheckUpdates: e.target.checked }));
+    S.settings = d.settings;
+    toast(e.target.checked ? 'بررسی خودکار نسخه جدید فعال شد.' : 'بررسی خودکار نسخه جدید غیرفعال شد.');
+  });
+}
+
 // ================================================================= start
 (async function start() {
   bindAll();
+  bindUpdates();
   try {
     const d = await call(api.init());
     S.settings = d.settings;
     S.empShiftsDraft = clone(d.settings.employeeShifts || {});
+    $('#autoUpdateChk').checked = d.settings.autoCheckUpdates !== false;
+    renderUpdate(d.update);
     renderShifts();
     renderClock();
     renderRules();

@@ -222,3 +222,19 @@ table.edit input.dt { width: 150px; text-align: center; }
 .assign-btn.set { border-style: solid; color: var(--accent); background: var(--accent-weak); border-color: #b7dcd6; }
 .assign-pop { position: fixed; left: auto; right: auto; min-width: 240px; }
 .assign-pop .hint { color: var(--muted); font-size: 12px; padding: 2px 4px 6px; }
+
+/* ---------------------------------------------------------------- update banner */
+.brand .ver { font-size: 11.5px; font-weight: 500; color: var(--faint); margin-right: 2px; }
+.update-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 8px 20px; background: var(--accent-weak); border-bottom: 1px solid #b7dcd6; color: #134e4a; font-size: 13px;
+}
+.update-bar.err { background: #fef2f2; border-bottom-color: #fecaca; color: #7f1d1d; }
+.update-bar .ub-text { flex: 1; min-width: 220px; }
+.update-bar .ub-actions { display: flex; gap: 14px; align-items: center; }
+.update-bar .ub-progress { flex: 0 0 240px; height: 6px; background: #cfe7e3; border-radius: 99px; overflow: hidden; }
+.update-bar .ub-progress > div { height: 100%; background: var(--accent); border-radius: 99px; transition: width .2s; }
+.update-bar .ub-progress.indeterminate > div { width: 30% !important; animation: slide 1.2s ease-in-out infinite; }
+@keyframes slide { 0% { transform: translateX(260%); } 100% { transform: translateX(-100%); } }
+.update-info { display: flex; flex-direction: column; gap: 8px; line-height: 1.9; }
+.inline-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }

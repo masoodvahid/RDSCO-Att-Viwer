@@ -11,6 +11,7 @@ const { DEFAULT_RULES } = require('./engine');
 module.exports = {
   version: 1,
   orgName: '',
+  autoCheckUpdates: true, // check GitHub Releases for a new version at start-up
   employees: {},  // { "1001": "نام و نام خانوادگی" }
   // Optional: shift templates allowed per employee (by template name). Empty = all templates.
   employeeShifts: {},  // { "1002": ["صبح‌کار"] }

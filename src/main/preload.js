@@ -21,4 +21,11 @@ contextBridge.exposeInMainWorld('api', {
   calToday: () => call('cal:today'),
   openPath: (p) => call('shell:open', p),
   showInFolder: (p) => call('shell:showInFolder', p),
+  // updates
+  updateCheck: () => call('update:check'),
+  updateDownload: () => call('update:download'),
+  updateCancel: () => call('update:cancel'),
+  updateInstall: () => call('update:install'),
+  updatePage: () => call('update:page'),
+  onUpdateState: (cb) => ipcRenderer.on('update:state', (_e, state) => cb(state)),
 });
