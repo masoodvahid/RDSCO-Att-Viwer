@@ -1,0 +1,98 @@
+{
+  "name": "attendance-report",
+  "version": "1.0.0",
+  "description": "گزارش‌گیری از فایل خام دستگاه حضور و غیاب (ZKTeco) با خروجی اکسل و PDF",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/**/*.test.js\"",
+    "check": "node scripts/check.js",
+    "build:css": "node -e \"console.log('No CSS build step: src/renderer/styles.css is plain CSS')\"",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac --arm64",
+    "build:mac-universal": "electron-builder --mac --universal",
+    "build:linux": "electron-builder --linux --x64"
+  },
+  "author": "Sharif Digital Solutions",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "jalaali-js": "^2.0.1"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
+    "resedit": "^3.1.0"
+  },
+  "productName": "Attendance Report",
+  "private": true,
+  "build": {
+    "appId": "ir.sharifdigital.attendance-report",
+    "productName": "Attendance Report",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "assets/fonts/**/*",
+      "assets/icon.png"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "shortcutName": "گزارش تردد پرسنل",
+      "uninstallDisplayName": "گزارش تردد پرسنل",
+      "artifactName": "AttendanceReport-Setup-${version}.${ext}",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    },
+    "portable": {
+      "artifactName": "AttendanceReport-${version}-portable.${ext}"
+    },
+    "afterPack": "build/afterPack.js",
+    "publish": null,
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "darkModeSupport": false,
+      "artifactName": "AttendanceReport-${version}-mac-${arch}.${ext}",
+      "extendInfo": {
+        "NSHumanReadableCopyright": "Sharif Digital Solutions"
+      }
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office",
+      "icon": "assets/icon-1024.png",
+      "artifactName": "AttendanceReport-${version}-linux-${arch}.${ext}"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masoodvahid/rdsco_att_report_maker.git"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

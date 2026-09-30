@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; script-src 'self'">
+  <title>گزارش تردد پرسنل</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>گزارش تردد پرسنل</span>
+    </div>
+    <div id="fileInfo" class="file-info"></div>
+    <button id="btnOpen" class="btn primary">بارگذاری فایل تردد</button>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="report" class="active">گزارش</button>
+    <button data-tab="employees">پرسنل</button>
+    <button data-tab="shifts">شیفت‌ها</button>
+    <button data-tab="clock">اصلاح ساعت دستگاه</button>
+    <button data-tab="rules">تنظیمات محاسبه</button>
+  </nav>
+
+  <main>
+    <!-- ============================================================ REPORT -->
+    <section id="tab-report" class="tab active">
+      <div id="emptyState" class="dropzone">
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2>فایل تردد دستگاه را اینجا رها کنید</h2>
+        <p>فایل خام دستگاه ساعت‌زنی (مثل <b>AttLog.dat</b>) را بکشید و اینجا رها کنید یا از دکمه زیر انتخاب کنید. چند فایل (مثلاً چند ماه) را هم می‌توانید با هم بارگذاری کنید؛ ترددهای تکراری خودکار حذف می‌شوند.</p>
+        <button class="btn primary" data-action="open">انتخاب فایل</button>
+      </div>
+
+      <div id="reportUi" hidden>
+        <div class="card filters">
+          <div class="field grow">
+            <label>پرسنل</label>
+            <div class="picker" id="empPicker">
+              <button type="button" class="picker-btn" id="empPickerBtn"></button>
+              <div class="picker-pop" id="empPickerPop" hidden>
+                <input type="search" id="empSearch" placeholder="جستجوی کد یا نام…">
+                <div class="picker-tools">
+                  <button type="button" class="link" id="empAll">همه پرسنل (پاک کردن انتخاب)</button>
+                </div>
+                <div class="picker-list" id="empList"></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="monthSel">ماه</label>
+            <select id="monthSel"></select>
+          </div>
+          <div class="field">
+            <label for="fromDate">از تاریخ</label>
+            <input id="fromDate" class="date-input" autocomplete="off" placeholder="۱۴۰۵/۰۶/۰۱">
+          </div>
+          <div class="field">
+            <label for="toDate">تا تاریخ</label>
+            <input id="toDate" class="date-input" autocomplete="off" placeholder="۱۴۰۵/۰۶/۳۱">
+          </div>
+          <div class="field actions">
+            <button id="btnShow" class="btn primary">نمایش گزارش</button>
+            <button id="btnExcel" class="btn">خروجی اکسل</button>
+            <button id="btnPdf" class="btn">خروجی PDF</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>خلاصه کارکرد</h2>
+            <span class="muted" id="periodLabel"></span>
+          </div>
+          <div class="table-wrap summary-wrap"><table class="grid" id="summaryTable"></table></div>
+        </div>
+
+        <div class="card" id="detailCard" hidden>
+          <div class="card-head">
+            <h2 id="detailTitle"></h2>
+            <div class="seg" id="detailSeg">
+              <button data-view="shifts" class="active">شیفت‌ها</button>
+              <button data-view="raw">ترددهای خام</button>
+            </div>
+          </div>
+          <div class="table-wrap detail-wrap"><table class="grid" id="detailTable"></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ EMPLOYEES -->
+    <section id="tab-employees" class="tab">
+      <div class="card">
+        <div class="card-head">
+          <h2>نام پرسنل</h2>
+          <div class="head-actions">
+            <input type="search" id="empTabSearch" placeholder="جستجو…">
+            <button class="btn" id="btnImportEmp">ورود نام‌ها از اکسل</button>
+            <button class="btn primary" id="btnSaveEmp">ذخیره</button>
+          </div>
+        </div>
+        <p class="help">فایل دستگاه فقط کد پرسنلی دارد. نام هر نفر را یک‌بار اینجا وارد کنید تا در گزارش‌ها نمایش داده شود. برای ورود از اکسل، ستون اول کد پرسنلی و ستون دوم نام باشد.<br>
+          «شیفت‌های مجاز» اختیاری است. اگر برای کسی شیفت انتخاب کنید، ترددهایش فقط با همان شیفت‌ها مقایسه می‌شود (مثلاً پرسنل نوبت‌کار: روزکار، شب‌کار و ۲۴ ساعته). اگر خالی بماند، نزدیک‌ترین شیفت به‌طور خودکار انتخاب می‌شود.</p>
+        <div class="table-wrap"><table class="grid" id="empTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ SHIFTS -->
+    <section id="tab-shifts" class="tab">
+      <div class="card">
+        <div class="card-head">
+          <h2>الگوهای شیفت</h2>
+          <div class="head-actions">
+            <button class="btn" id="btnAddShift">افزودن شیفت</button>
+            <button class="btn ghost" id="btnResetShifts">بازگشت به پیش‌فرض</button>
+            <button class="btn primary" id="btnSaveShifts">ذخیره</button>
+          </div>
+        </div>
+        <p class="help">هر شیفت ثبت‌شده خودکار به نزدیک‌ترین الگو (بیشتر بر اساس ساعت ورود) وصل می‌شود و تأخیر، تعجیل و اضافه‌کار نسبت به همان الگو حساب می‌شود؛ نیازی نیست برای هر نفر شیفت تعریف کنید. شیفتی که پایانش روز بعد است (مثل ۱۸:۰۰ تا ۰۶:۳۰) خودکار تشخیص داده می‌شود؛ تیک «روز بعد» فقط برای شیفت‌های ۲۴ ساعته و بیشتر لازم است.</p>
+        <div class="notice">الگوهای پیش‌فرض از روی الگوی ترددهای فایل شما حدس زده شده‌اند؛ لطفاً ساعت رسمی شیفت‌های سازمان را جایگزین کنید.</div>
+        <div class="table-wrap"><table class="grid edit" id="shiftTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ CLOCK -->
+    <section id="tab-clock" class="tab">
+      <div class="card">
+        <div class="card-head">
+          <h2>اصلاح ساعت دستگاه</h2>
+          <div class="head-actions">
+            <button class="btn" id="btnAddClock">افزودن بازه</button>
+            <button class="btn primary" id="btnSaveClock">ذخیره</button>
+          </div>
+        </div>
+        <p class="help">اگر ساعت دستگاه در یک بازه اشتباه بوده، آن بازه را (بر اساس ساعتی که دستگاه ثبت کرده) و مقدار اختلاف را به دقیقه وارد کنید. عدد مثبت یعنی دستگاه <b>عقب</b> بوده و به ساعت‌ها اضافه می‌شود؛ عدد منفی یعنی دستگاه جلو بوده. مثال: اگر کسی ساعت ۰۷:۴۵ آمده ولی دستگاه ۰۲:۳۰ ثبت کرده، اختلاف ۳۱۵+ دقیقه است.</p>
+        <div class="notice">بازه‌های پیش‌فرض با تحلیل فایل شما پیدا شده‌اند. بین ۲۷ تا ۳۰ آذر ۱۴۰۴ ساعت دستگاه چند بار تغییر کرده و اصلاح خودکار برای آن روزها تعریف نشده؛ آن روزها را در گزارش بررسی کنید. بهتر است ساعت و باتری دستگاه هم بررسی شود.</div>
+        <div class="table-wrap"><table class="grid edit" id="clockTable"></table></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ RULES -->
+    <section id="tab-rules" class="tab">
+      <div class="card">
+        <div class="card-head">
+          <h2>تنظیمات محاسبه</h2>
+          <div class="head-actions">
+            <button class="btn ghost" id="btnResetRules">بازگشت به پیش‌فرض</button>
+            <button class="btn primary" id="btnSaveRules">ذخیره</button>
+          </div>
+        </div>
+        <div class="form-grid" id="rulesForm"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>پشتیبان تنظیمات</h2></div>
+        <p class="help">نام پرسنل، شیفت‌ها، اصلاح ساعت و تنظیمات محاسبه را در یک فایل ذخیره کنید تا روی رایانه دیگری بازیابی شود.</p>
+        <div class="row-actions">
+          <button class="btn" id="btnExportSettings">ذخیره فایل پشتیبان</button>
+          <button class="btn" id="btnImportSettings">بازیابی از فایل</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="assignPop" class="picker-pop assign-pop" hidden></div>
+  <div id="datePop" class="date-pop" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+  <div id="dropOverlay" class="drop-overlay" hidden><div>فایل را رها کنید</div></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

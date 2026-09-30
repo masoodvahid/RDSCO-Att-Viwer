@@ -6,3 +6,12 @@ out/
 Thumbs.db
 .env
 src/renderer/app.css
+
+# Attendance device logs and generated reports contain personal data — never commit them
+*.dat
+AttLog*
+*.xlsx
+*.pdf
+scripts/dev/out/
+test/out/
+test/shots*/
