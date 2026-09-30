@@ -21,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const core = require('./update-core');
 
-const REPO = { owner: 'masoodvahid', repo: 'rdsco_att_report_maker' };
+const REPO = { owner: 'masoodvahid', repo: 'RDSCO-Att-Viwer' };
 const RELEASES_PAGE = `https://github.com/${REPO.owner}/${REPO.repo}/releases/latest`;
 
 // Development/testing only (ignored in packaged builds):

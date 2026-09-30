@@ -68,7 +68,7 @@
       {
         "provider": "github",
         "owner": "masoodvahid",
-        "repo": "rdsco_att_report_maker",
+        "repo": "RDSCO-Att-Viwer",
         "releaseType": "release"
       }
     ],
@@ -99,7 +99,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/masoodvahid/rdsco_att_report_maker.git"
+    "url": "https://github.com/masoodvahid/RDSCO-Att-Viwer.git"
   },
   "engines": {
     "node": ">=22"

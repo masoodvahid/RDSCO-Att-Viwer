@@ -4,7 +4,7 @@
 
 ## دانلود و نصب
 
-آخرین نسخه را از بخش [Releases](https://github.com/masoodvahid/rdsco_att_report_maker/releases/latest) دانلود کنید.
+آخرین نسخه را از بخش [Releases](https://github.com/masoodvahid/RDSCO-Att-Viwer/releases/latest) دانلود کنید.
 
 | سیستم‌عامل | فایل | توضیح |
 |---|---|---|
